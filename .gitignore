@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+pip-wheel-metadata/
+
+# Environment
+.env
+.env.local
+.env.production
+.env.*.local
+*.env
+
+# Build outputs
+dist/
+build/
+out/
+.next/
+.expo/
+web-build/
+*.egg-info/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.hypothesis/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary
+tmp/
+temp/
+.cache/
+.parcel-cache/
+.turbo/
+
+# Vite
+.vite/
+*.local
