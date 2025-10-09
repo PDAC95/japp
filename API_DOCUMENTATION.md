@@ -381,75 +381,217 @@ No Content
 
 ## Chat
 
-### Send Message to AI Coach
+### Extract Food from Text (Claude AI)
 
 ```http
-POST /api/v1/chat
-Authorization: Bearer <token>
+POST /api/v1/chat/extract
 Content-Type: application/json
 
 {
-  "message": "I had 2 eggs and toast for breakfast",
-  "personality": "motivational",
-  "context": {
-    "current_streak": 5,
-    "goal": "weight_loss"
+  "text": "I had 3 eggs and toast with butter for breakfast"
+}
+```
+
+**Description:**
+Extracts food items and nutrition data from natural language text using Claude AI. Optimized for North American foods (USA/Canada market) with support for international cuisine.
+
+**Examples:**
+- "3 eggs and toast" → extracts eggs and toast separately
+- "grilled chicken breast with rice" → extracts both items with nutrition
+- "turkey sandwich on whole wheat" → understands typical portions
+- "protein shake and banana" → extracts beverages and fruits
+
+**Request Body:**
+```typescript
+{
+  text: string;  // 1-1000 characters, cannot be empty
+}
+```
+
+**Response (200) - Success:**
+```json
+{
+  "success": true,
+  "data": {
+    "foods": [
+      {
+        "name": "Scrambled eggs",
+        "quantity": 3,
+        "unit": "piece",
+        "calories": 210.0,
+        "protein_g": 18.0,
+        "carbs_g": 3.0,
+        "fat_g": 15.0
+      },
+      {
+        "name": "Toast with butter",
+        "quantity": 2,
+        "unit": "piece",
+        "calories": 200.0,
+        "protein_g": 4.0,
+        "carbs_g": 30.0,
+        "fat_g": 8.0
+      }
+    ],
+    "total_calories": 410.0,
+    "total_macros": {
+      "protein": 22.0,
+      "carbs": 33.0,
+      "fat": 23.0
+    },
+    "message": "Food logged successfully!",
+    "error": null
+  },
+  "message": "Extracted 2 food item(s)",
+  "error": null
+}
+```
+
+**Response (422) - Validation Error:**
+```json
+{
+  "success": false,
+  "data": null,
+  "message": null,
+  "error": {
+    "message": "Food description cannot be empty",
+    "code": "VALIDATION_ERROR",
+    "statusCode": 422
   }
 }
 ```
 
-**Personalities:**
-- `motivational`: Enthusiastic and encouraging
-- `professional`: Direct and informative
-- `friendly`: Casual and supportive
-
-**Response (200):**
+**Response (504) - API Timeout:**
 ```json
 {
-  "id": "uuid",
-  "message": "Great breakfast choice! Let me break that down:",
-  "extracted_food": {
-    "food_name": "2 eggs and toast",
-    "protein_g": 16,
-    "carbs_g": 30,
-    "fat_g": 12,
-    "calories": 280,
-    "confidence": 0.95
-  },
-  "suggestions": [
-    "Add some avocado for healthy fats",
-    "Consider whole grain toast for more fiber"
-  ],
-  "created_at": "2025-01-15T08:30:00Z"
+  "success": false,
+  "data": null,
+  "message": null,
+  "error": {
+    "message": "AI service timeout - please try again",
+    "code": "CLAUDE_TIMEOUT",
+    "statusCode": 504
+  }
 }
 ```
 
-### Get Chat History
+**Response (500) - Extraction Failed:**
+```json
+{
+  "success": false,
+  "data": null,
+  "message": null,
+  "error": {
+    "message": "Could not understand food description",
+    "code": "EXTRACTION_FAILED",
+    "statusCode": 422
+  }
+}
+```
+
+**Validation Rules:**
+- All nutrition values must be >= 0 (no negative values)
+- Quantity must be > 0
+- Calories calculated as: (protein_g * 4) + (carbs_g * 4) + (fat_g * 9)
+- ±5% tolerance for calorie rounding
+- Maximum 30 seconds timeout
+- Automatic retry with exponential backoff (3 attempts)
+
+---
+
+### Send Chat Message
 
 ```http
-GET /api/v1/chat/history?limit=20
-Authorization: Bearer <token>
+POST /api/v1/chat/message
+Content-Type: application/json
+
+{
+  "content": "I had 2 tacos for lunch",
+  "extract_food": true
+}
+```
+
+**Description:**
+Send a message to the AI health coach. Optionally extracts food data if the message contains food descriptions.
+
+**Request Body:**
+```typescript
+{
+  content: string;        // 1-2000 characters
+  extract_food: boolean;  // default: true
+}
 ```
 
 **Response (200):**
 ```json
 {
-  "messages": [
-    {
-      "id": "uuid",
-      "role": "user",
-      "content": "I had 2 eggs and toast",
-      "created_at": "2025-01-15T08:30:00Z"
-    },
-    {
-      "id": "uuid",
-      "role": "assistant",
-      "content": "Great breakfast choice!",
-      "extracted_food": {...},
-      "created_at": "2025-01-15T08:30:05Z"
+  "success": true,
+  "data": {
+    "response": "Food logged successfully!",
+    "extracted_data": {
+      "foods": [
+        {
+          "name": "Tacos",
+          "quantity": 2,
+          "unit": "piece",
+          "calories": 260.0,
+          "protein_g": 14.0,
+          "carbs_g": 21.0,
+          "fat_g": 12.0
+        }
+      ],
+      "total_calories": 260.0,
+      "total_macros": {
+        "protein": 14.0,
+        "carbs": 21.0,
+        "fat": 12.0
+      },
+      "message": "Food logged successfully!",
+      "error": null
     }
-  ],
-  "total": 2
+  },
+  "message": "Message processed successfully",
+  "error": null
+}
+```
+
+---
+
+### Chat Service Health Check
+
+```http
+GET /api/v1/chat/health
+```
+
+**Description:**
+Verifies that Claude service is properly initialized and configured.
+
+**Response (200) - Healthy:**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "healthy",
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 2000,
+    "temperature": 0.3
+  },
+  "message": "Chat service is healthy",
+  "error": null
+}
+```
+
+**Response (503) - Unhealthy:**
+```json
+{
+  "success": false,
+  "data": null,
+  "message": null,
+  "error": {
+    "message": "ANTHROPIC_API_KEY not configured in environment",
+    "code": "SERVICE_UNHEALTHY",
+    "statusCode": 503
+  }
 }
 ```
 

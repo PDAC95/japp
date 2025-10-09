@@ -43,6 +43,10 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: str = ""
     SENDGRID_API_KEY: str = ""
 
+    # Google OAuth (optional)
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+
     class Config:
         env_file = ".env"
         case_sensitive = True

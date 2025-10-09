@@ -53,9 +53,9 @@ async def root():
         }
     )
 
-# API v1 routes will be included here
-# from app.api.v1.router import api_router
-# app.include_router(api_router, prefix="/api/v1")
+# API v1 routes
+from app.api.v1.router import api_router
+app.include_router(api_router, prefix="/api/v1")
 
 if __name__ == "__main__":
     import uvicorn
