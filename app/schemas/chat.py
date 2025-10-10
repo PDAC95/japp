@@ -49,6 +49,11 @@ class FoodExtractionRequest(BaseModel):
         max_length=1000,
         example="Comí 2 tacos de carnitas con salsa verde"
     )
+    personality: Optional[str] = Field(
+        default='friendly',
+        description="Coach personality type (friendly, strict, motivational, casual)",
+        example="friendly"
+    )
 
     @validator('text')
     def text_not_empty(cls, v):

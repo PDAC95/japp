@@ -46,10 +46,13 @@ async def extract_food_from_text(
     - error: Error details if failed
     """
     try:
-        logger.info(f"Extracting food from text: '{request.text[:50]}...'")
+        logger.info(f"Extracting food from text: '{request.text[:50]}...' with personality: {request.personality}")
 
-        # Call Claude service
-        extraction_result = await claude_service.extract_food_from_text(request.text)
+        # Call Claude service with personality
+        extraction_result = await claude_service.extract_food_from_text(
+            request.text,
+            personality=request.personality or 'friendly'
+        )
 
         # Check if extraction failed
         if "error" in extraction_result and extraction_result["error"]:

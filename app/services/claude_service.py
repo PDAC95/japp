@@ -50,6 +50,7 @@ class ClaudeService:
     async def extract_food_from_text(
         self,
         text: str,
+        personality: str = 'friendly',
         max_retries: int = 3
     ) -> Dict[str, Any]:
         """
@@ -58,6 +59,7 @@ class ClaudeService:
         Args:
             text: User's natural language food description
                   Examples: "Comí 2 tacos de carnitas", "3 eggs and toast"
+            personality: Coach personality type (friendly, strict, motivational, casual)
             max_retries: Maximum retry attempts with exponential backoff
 
         Returns:
@@ -75,8 +77,8 @@ class ClaudeService:
         if not text or not text.strip():
             raise ValueError("Food description text cannot be empty")
 
-        # Build optimized prompt for food extraction
-        prompt = self._build_food_extraction_prompt(text)
+        # Build optimized prompt for food extraction with personality
+        prompt = self._build_food_extraction_prompt(text, personality)
 
         # Call Claude with retry logic
         for attempt in range(max_retries):
@@ -155,17 +157,32 @@ class ClaudeService:
             "error": "Maximum retries exceeded"
         }
 
-    def _build_food_extraction_prompt(self, text: str) -> str:
+    def _build_food_extraction_prompt(self, text: str, personality: str = 'friendly') -> str:
         """
-        Build optimized prompt for extracting food data.
+        Build optimized prompt for extracting food data with personality.
 
         Designed to handle:
         - North American foods (burgers, sandwiches, salads, etc.)
         - Common measurements (cups, tablespoons, ounces, pieces)
         - International cuisine (Mexican, Italian, Asian, etc.)
         - English descriptions (primary market: USA/Canada)
+        - Personality-based responses (friendly, strict, motivational, casual)
         """
-        return f"""You are a nutrition expert AI that extracts food information from natural language.
+
+        # Personality-specific message guidelines
+        personality_guidelines = {
+            'friendly': 'Include a warm, supportive message. Be encouraging and use friendly emojis sparingly (😊, 🍎).',
+            'strict': 'Keep the message concise and focused. Be direct about their choices without being harsh.',
+            'motivational': 'Include an energetic, motivating message with emojis! Make them feel like a champion! (🔥, 💪, 🚀)',
+            'casual': 'Include a casual, friendly comment like you\'re talking to a buddy. Keep it chill and relaxed.'
+        }
+
+        message_guideline = personality_guidelines.get(personality, personality_guidelines['friendly'])
+
+        return f"""You are JAPPI, an AI nutrition coach that extracts food information from natural language.
+
+PERSONALITY: {personality.capitalize()}
+{message_guideline}
 
 USER INPUT: "{text}"
 
@@ -184,7 +201,7 @@ JSON FORMAT:
       "fat_g": number (must be >= 0)
     }}
   ],
-  "message": "optional friendly response"
+  "message": "optional response based on personality"
 }}
 
 RULES:
@@ -196,6 +213,7 @@ RULES:
 6. If unsure, provide conservative estimates
 7. Return ONLY the JSON object, nothing else
 8. Recognize common restaurant chains and their typical portions
+9. IMPORTANT: Include a "message" field with a personality-appropriate response
 
 COMMON FOODS & PORTIONS (USA/Canada):
 - "burger" → ~500-800 calories (depends on type)
