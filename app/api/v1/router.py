@@ -5,7 +5,7 @@ Aggregates all v1 endpoints into a single router.
 """
 
 from fastapi import APIRouter
-from app.api.v1.endpoints import chat
+from app.api.v1.endpoints import chat, personalities
 
 api_router = APIRouter()
 
@@ -14,6 +14,13 @@ api_router.include_router(
     chat.router,
     prefix="/chat",
     tags=["Chat"]
+)
+
+# Include personalities endpoints
+api_router.include_router(
+    personalities.router,
+    prefix="/personalities",
+    tags=["Personalities"]
 )
 
 # Future endpoints will be added here:

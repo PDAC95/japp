@@ -19,6 +19,7 @@ import json
 from typing import Dict, List, Optional, Any
 from anthropic import AsyncAnthropic
 from app.core.config import settings
+from app.core.supabase import get_supabase_client
 from app.validators.nutrition_validator import get_nutrition_validator
 
 logger = logging.getLogger(__name__)
@@ -44,8 +45,55 @@ class ClaudeService:
         self.model = settings.CLAUDE_MODEL or "claude-3-5-sonnet-20241022"
         self.max_tokens = settings.CLAUDE_MAX_TOKENS or 2000
         self.temperature = settings.CLAUDE_TEMPERATURE or 0.3  # Lower for consistency
+        self.supabase = get_supabase_client()
 
         logger.info(f"ClaudeService initialized with model: {self.model}")
+
+    async def _get_personality_instructions(self, personality_code: str) -> str:
+        """
+        Get prompt instructions for a personality from database.
+
+        Args:
+            personality_code: Personality code (e.g., 'friendly', 'strict')
+
+        Returns:
+            Prompt instructions string
+
+        Fallback to friendly if personality not found.
+        """
+        try:
+            response = self.supabase.table('personality_types') \
+                .select('prompt_instructions') \
+                .eq('code', personality_code) \
+                .eq('is_active', True) \
+                .single() \
+                .execute()
+
+            if response.data:
+                logger.info(f"Loaded personality '{personality_code}' from database")
+                return response.data['prompt_instructions']
+
+        except Exception as e:
+            logger.warning(f"Failed to load personality '{personality_code}' from DB: {e}")
+
+        # Fallback to friendly
+        try:
+            response = self.supabase.table('personality_types') \
+                .select('prompt_instructions') \
+                .eq('code', 'friendly') \
+                .eq('is_active', True) \
+                .single() \
+                .execute()
+
+            if response.data:
+                logger.info("Using fallback personality 'friendly'")
+                return response.data['prompt_instructions']
+
+        except Exception as e:
+            logger.error(f"Failed to load fallback personality: {e}")
+
+        # Final hardcoded fallback
+        return "You are a warm, supportive nutrition coach. Be encouraging and understanding."
 
     async def extract_food_from_text(
         self,
@@ -78,7 +126,7 @@ class ClaudeService:
             raise ValueError("Food description text cannot be empty")
 
         # Build optimized prompt for food extraction with personality
-        prompt = self._build_food_extraction_prompt(text, personality)
+        prompt = await self._build_food_extraction_prompt(text, personality)
 
         # Call Claude with retry logic
         for attempt in range(max_retries):
@@ -157,7 +205,7 @@ class ClaudeService:
             "error": "Maximum retries exceeded"
         }
 
-    def _build_food_extraction_prompt(self, text: str, personality: str = 'friendly') -> str:
+    async def _build_food_extraction_prompt(self, text: str, personality: str = 'friendly') -> str:
         """
         Build optimized prompt for extracting food data with personality.
 
@@ -166,23 +214,16 @@ class ClaudeService:
         - Common measurements (cups, tablespoons, ounces, pieces)
         - International cuisine (Mexican, Italian, Asian, etc.)
         - English descriptions (primary market: USA/Canada)
-        - Personality-based responses (friendly, strict, motivational, casual)
+        - Personality-based responses (loaded dynamically from database)
         """
 
-        # Personality-specific message guidelines
-        personality_guidelines = {
-            'friendly': 'Include a warm, supportive message. Be encouraging and positive.',
-            'strict': 'Keep the message concise and focused. Be direct about their choices without being harsh.',
-            'motivational': 'Include an energetic, motivating message! Make them feel like a champion!',
-            'casual': 'Include a casual, friendly comment like you\'re talking to a buddy. Keep it chill and relaxed.'
-        }
-
-        message_guideline = personality_guidelines.get(personality, personality_guidelines['friendly'])
+        # Load personality instructions from database
+        personality_instructions = await self._get_personality_instructions(personality)
 
         return f"""You are JAPPI, an AI nutrition coach that extracts food information from natural language.
 
-PERSONALITY: {personality.capitalize()}
-{message_guideline}
+PERSONALITY INSTRUCTIONS:
+{personality_instructions}
 
 USER INPUT: "{text}"
 
