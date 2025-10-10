@@ -171,9 +171,9 @@ class ClaudeService:
 
         # Personality-specific message guidelines
         personality_guidelines = {
-            'friendly': 'Include a warm, supportive message. Be encouraging and use friendly emojis sparingly (😊, 🍎).',
+            'friendly': 'Include a warm, supportive message. Be encouraging and positive.',
             'strict': 'Keep the message concise and focused. Be direct about their choices without being harsh.',
-            'motivational': 'Include an energetic, motivating message with emojis! Make them feel like a champion! (🔥, 💪, 🚀)',
+            'motivational': 'Include an energetic, motivating message! Make them feel like a champion!',
             'casual': 'Include a casual, friendly comment like you\'re talking to a buddy. Keep it chill and relaxed.'
         }
 
