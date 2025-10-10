@@ -19,6 +19,7 @@ import json
 from typing import Dict, List, Optional, Any
 from anthropic import AsyncAnthropic
 from app.core.config import settings
+from app.validators.nutrition_validator import get_nutrition_validator
 
 logger = logging.getLogger(__name__)
 
@@ -102,8 +103,8 @@ class ClaudeService:
                 # Parse JSON response
                 parsed_data = self._parse_claude_response(raw_text)
 
-                # CRITICAL: Validate nutrition data (no negatives)
-                validated_data = self._validate_nutrition_data(parsed_data)
+                # CRITICAL: Validate nutrition data with enhanced validator (US-036)
+                validated_data = self._validate_nutrition_data_v2(parsed_data)
 
                 logger.info(f"Successfully extracted {len(validated_data['foods'])} food items")
                 return validated_data
@@ -336,6 +337,54 @@ Now extract from: "{text}"
             },
             "message": data.get("message", "Food logged successfully!")
         }
+
+    def _validate_nutrition_data_v2(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Enhanced nutrition data validation using NutritionValidator (US-036).
+
+        This replaces the old _validate_nutrition_data() with more comprehensive
+        validation including:
+        - Stricter range checks (max 5000 cal/food, max 2000g portion)
+        - Better error reporting
+        - Auto-correction with warnings
+        - Water volume limits (10L max)
+
+        Args:
+            data: Parsed data from Claude
+
+        Returns:
+            Validated and corrected data
+
+        Raises:
+            ValueError: If data structure is critically invalid
+        """
+        validator = get_nutrition_validator()
+
+        try:
+            result = validator.validate_meal_data(data, auto_correct=True)
+
+            # Log validation issues
+            if result.warnings:
+                for warning in result.warnings:
+                    logger.warning(f"Nutrition validation warning: {warning}")
+
+            if not result.is_valid:
+                error_msg = "; ".join(result.errors)
+                logger.error(f"Nutrition validation failed: {error_msg}")
+                raise ValueError(f"Invalid nutrition data: {error_msg}")
+
+            # Log validation summary
+            summary = validator.get_validation_summary()
+            if summary["warning_count"] > 0:
+                logger.info(f"Validation completed with {summary['warning_count']} warnings")
+
+            return result.corrected_data
+
+        except Exception as e:
+            logger.error(f"Validation error: {e}")
+            # Fallback to old validation method if new validator fails
+            logger.warning("Falling back to legacy validation method")
+            return self._validate_nutrition_data(data)
 
 
 # Singleton instance
