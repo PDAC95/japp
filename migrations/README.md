@@ -4,7 +4,12 @@ This directory contains SQL migration scripts for the JAPPI PostgreSQL database 
 
 ## Migration Files
 
-- `001_initial_schema.sql` - Initial database schema (profiles, coach_settings, meal_entries)
+| File | Description | Status | Dependencies |
+|------|-------------|--------|--------------|
+| `001_initial_schema.sql` | Initial tables (profiles, coach_settings, meal_entries) | ✅ Executed | None |
+| `002_personality_types.sql` | Personality types table and data | ✅ Executed | 001 |
+| `003_personality_types.sql` | Update personality system (dynamic) | ✅ Executed | 002 |
+| `004_food_database_schema.sql` | **Complete food database structure** | 🆕 **Ready** | 001 |
 
 ## How to Execute Migrations in Supabase
 
@@ -166,18 +171,79 @@ The validation trigger is working. Fix your data:
 5. 🔄 Create TypeScript types for frontend
 6. 🔄 Build CRUD endpoints in FastAPI
 
+## Migration 004: Food Database Schema
+
+**File:** `004_food_database_schema.sql`
+**Story:** US-042
+**Status:** 🆕 Ready to Execute
+
+### What it Creates
+
+- **4 Tables:**
+  - `food_brands` - Commercial food brands
+  - `foods` - System-wide food database (20 seeded foods)
+  - `user_foods` - User-created custom foods
+  - `food_favorites` - Favorite foods with usage tracking
+
+- **2 Helper Functions:**
+  - `search_foods(query, limit)` - Full-text search in Spanish
+  - `get_user_frequent_foods(user_id, limit)` - Most used foods
+
+- **6 Triggers:**
+  - Calorie validation for foods and user_foods (10% tolerance)
+  - Auto-update timestamps on all tables
+
+- **RLS Policies:**
+  - Complete security on all tables
+  - Users only access their own custom foods/favorites
+
+- **20 Seeded Foods:**
+  - Proteins: Chicken, eggs, tuna, beef
+  - Grains: Rice, bread, tortillas, pasta
+  - Vegetables: Broccoli, lettuce, tomato, avocado
+  - Fruits: Banana, apple, orange
+  - Dairy: Milk, cheese, yogurt
+  - Snacks: Fries, hamburger
+
+### Post-Execution Verification
+
+```sql
+-- 1. Check tables exist (should return 4 rows)
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public'
+AND table_name IN ('foods', 'user_foods', 'food_favorites', 'food_brands');
+
+-- 2. Check seed data (should return 20)
+SELECT COUNT(*) FROM foods WHERE verified = true;
+
+-- 3. Test search function
+SELECT * FROM search_foods('pollo', 5);
+
+-- 4. Test calorie validation
+INSERT INTO foods (name, category, calories, protein_g, carbs_g, fat_g, verified, source)
+VALUES ('Test Food', 'protein', 165, 31, 0, 3.6, false, 'manual');
+-- Should succeed ✓
+```
+
+### Documentation
+
+For complete schema reference, see:
+- **FOOD_DATABASE_SCHEMA.md** - Full documentation with examples
+- **004_food_database_schema.sql** - Migration SQL with inline comments
+
+---
+
 ## Migration Status
 
-- [x] Initial schema created
-- [x] RLS policies enabled
-- [x] Triggers configured
-- [x] Validation constraints added
+- [x] Initial schema created (001)
+- [x] Personality types (002, 003)
+- [x] **Food database ready (004)** 🆕
 - [ ] Backend models updated
 - [ ] Frontend types generated
 - [ ] API endpoints implemented
 
 ---
 
-**Last Updated:** 2024-10-03
-**Schema Version:** 001
+**Last Updated:** 2024-10-14
+**Current Schema Version:** 004
 **Database:** Supabase PostgreSQL 15+
