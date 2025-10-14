@@ -5,7 +5,7 @@ Aggregates all v1 endpoints into a single router.
 """
 
 from fastapi import APIRouter
-from app.api.v1.endpoints import chat, personalities
+from app.api.v1.endpoints import chat, personalities, foods
 
 api_router = APIRouter()
 
@@ -23,8 +23,14 @@ api_router.include_router(
     tags=["Personalities"]
 )
 
+# Include foods endpoints
+api_router.include_router(
+    foods.router,
+    prefix="/foods",
+    tags=["Foods"]
+)
+
 # Future endpoints will be added here:
 # api_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
-# api_router.include_router(food.router, prefix="/food", tags=["Food Tracking"])
 # api_router.include_router(profile.router, prefix="/profile", tags=["Profile"])
 # api_router.include_router(fasting.router, prefix="/fasting", tags=["Fasting"])
