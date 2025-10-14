@@ -434,15 +434,15 @@ INSERT INTO public.foods (name, name_en, category, calories, protein_g, carbs_g,
     ('Pasta cocida', 'Cooked pasta', 'grain', 131, 5, 25, 1.1, 1.8, 0.6, true, 'usda'),
 
     -- Vegetables
-    ('Brócoli', 'Broccoli', 'vegetable', 34, 2.8, 7, 0.4, 2.6, 1.7, true, 'usda'),
-    ('Lechuga', 'Lettuce', 'vegetable', 15, 1.4, 2.9, 0.2, 1.3, 0.8, true, 'usda'),
-    ('Tomate', 'Tomato', 'vegetable', 18, 0.9, 3.9, 0.2, 1.2, 2.6, true, 'usda'),
+    ('Brócoli', 'Broccoli', 'vegetable', 43, 2.8, 7, 0.4, 2.6, 1.7, true, 'usda'),
+    ('Lechuga', 'Lettuce', 'vegetable', 19, 1.4, 2.9, 0.2, 1.3, 0.8, true, 'usda'),
+    ('Tomate', 'Tomato', 'vegetable', 21, 0.9, 3.9, 0.2, 1.2, 2.6, true, 'usda'),
     ('Aguacate', 'Avocado', 'vegetable', 160, 2, 8.5, 15, 6.7, 0.7, true, 'usda'),
 
     -- Fruits
-    ('Plátano', 'Banana', 'fruit', 89, 1.1, 23, 0.3, 2.6, 12, true, 'usda'),
-    ('Manzana', 'Apple', 'fruit', 52, 0.3, 14, 0.2, 2.4, 10, true, 'usda'),
-    ('Naranja', 'Orange', 'fruit', 47, 0.9, 12, 0.1, 2.4, 9, true, 'usda'),
+    ('Plátano', 'Banana', 'fruit', 99, 1.1, 23, 0.3, 2.6, 12, true, 'usda'),
+    ('Manzana', 'Apple', 'fruit', 59, 0.3, 14, 0.2, 2.4, 10, true, 'usda'),
+    ('Naranja', 'Orange', 'fruit', 52, 0.9, 12, 0.1, 2.4, 9, true, 'usda'),
 
     -- Dairy
     ('Leche entera', 'Whole milk', 'dairy', 61, 3.2, 4.8, 3.3, 0, 5.1, true, 'usda'),
