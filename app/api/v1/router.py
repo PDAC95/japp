@@ -5,7 +5,7 @@ Aggregates all v1 endpoints into a single router.
 """
 
 from fastapi import APIRouter
-from app.api.v1.endpoints import chat, personalities, foods, meal_entries
+from app.api.v1.endpoints import chat, personalities, foods, meal_entries, daily_summary
 
 api_router = APIRouter()
 
@@ -34,6 +34,12 @@ api_router.include_router(
 api_router.include_router(
     meal_entries.router,
     tags=["Meal Entries"]
+)
+
+# Include daily summary endpoints
+api_router.include_router(
+    daily_summary.router,
+    tags=["Daily Summary"]
 )
 
 # Future endpoints will be added here:
